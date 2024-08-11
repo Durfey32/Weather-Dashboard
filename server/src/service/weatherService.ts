@@ -1,7 +1,32 @@
 import dotenv from 'dotenv';
-import { response } from 'express';
+// import { response } from 'express';
 import fetch from 'node-fetch';
 dotenv.config();
+
+// Define an interface for the Weather API response
+interface WeatherApiResponse {
+  current: {
+    temp: number;
+    humidity: number;
+    wind_speed: number;
+    weather: {
+      icon: string;
+      description: string;
+    }[];
+  };
+  daily: {
+    dt: number;
+    temp: {
+      day: number;
+    };
+    wind_speed: number;
+    humidity: number;
+    weather: {
+      icon: string;
+      description: string;
+    }[];
+  }[];
+}
 
 // TODO: Define an interface for the Coordinates object
 interface Coordinates {
@@ -49,10 +74,9 @@ class WeatherService {
 
   // TODO: Create fetchLocationData method
   private async fetchLocationData(query: string) {
-      const response = await fetch(
-          `${this.baseURL}weather?q=${query}&appid=${this.apiKey}`
-      );
-      return response.json();
+    const url = this.buildGeocodeQuery(query);
+    const response = await fetch(url);
+    return response.json();
   }
 
   // TODO: Create destructureLocationData method
@@ -79,9 +103,9 @@ class WeatherService {
   }
 
   // TODO: Create fetchWeatherData method
-  private async fetchWeatherData(coordinates: Coordinates) {
+  private async fetchWeatherData(coordinates: Coordinates): Promise<WeatherApiResponse> {
     const response = await fetch(this.buildWeatherQuery(coordinates));
-    return response.json();
+    return response.json() as Promise<WeatherApiResponse>;
   }
 
   // TODO: Build parseCurrentWeather method
@@ -115,7 +139,6 @@ class WeatherService {
     const weatherData = await this.fetchWeatherData(coordinates);
     const currentWeather = this.parseCurrentWeather(weatherData);
     const forecast = this.buildForecastArray(weatherData.daily);
-
     return { currentWeather, forecast };
   }
 }
