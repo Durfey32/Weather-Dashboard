@@ -1,14 +1,10 @@
 [
   {
-    "name": "San Diego",
+    "name": "New York",
     "id": 1
   },
   {
-    "name": "salt lake city",
+    "name": "San Diego",
     "id": 2
-  },
-  {
-    "name": "salt lake city",
-    "id": 3
   }
 ]

@@ -93,13 +93,10 @@ class WeatherService {
 
   // TODO: Create destructureLocationData method
   private destructureLocationData(locationData: any): Coordinates {
-    console.log(this.destructureLocationData);
     if (!locationData.coord) {
       throw new Error('Invalid location data received from API');
     }
-    const {
-      coord: { lat, lon },
-    } = locationData;
+    const { coord: { lat, lon } } = locationData;
     return { lat, lon };
   }
 
@@ -113,7 +110,6 @@ class WeatherService {
 
   // TODO: Create buildWeatherQuery method
   private buildWeatherQuery(coordinates: Coordinates): string {
-    console.log(this.buildWeatherQuery);
     return `${this.baseURL}onecall?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${this.apiKey}&units=metric`;
   }
 
@@ -124,9 +120,7 @@ class WeatherService {
   }
 
   // TODO: Create fetchWeatherData method
-  private async fetchWeatherData(
-    coordinates: Coordinates
-  ): Promise<WeatherApiResponse> {
+  private async fetchWeatherData(coordinates: Coordinates): Promise<WeatherApiResponse> {
     const response = await fetch(this.buildWeatherQuery(coordinates));
     if (!response.ok) {
       throw new Error(`Failed to fetch weather data: ${response.statusText}`);
@@ -135,14 +129,14 @@ class WeatherService {
   }
   // TODO: Build parseCurrentWeather method
   private parseCurrentWeather(response: any): Weather {
-    const {city, main, weather, wind} = response;
+    const { name, main, weather, wind } = response;
     return new Weather(
-        city,
-        main.temp,
-        main.humidity,
-        wind.speed,
-        weather[0].icon,
-        weather[0].description
+      name,
+      main.temp,
+      main.humidity,
+      wind.speed,
+      weather[0].icon,
+      weather[0].description
     );
   }
 
@@ -167,7 +161,7 @@ class WeatherService {
       const forecast = this.buildForecastArray(weatherData.daily);
   
       res.status(200).json({ currentWeather, forecast });
-    } catch (error: unknown) {
+    } catch (error) {
       const errorMessage = (error as Error).message;
       console.error('Error getting weather data:', errorMessage);
   

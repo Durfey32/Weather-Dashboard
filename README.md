@@ -20,7 +20,9 @@ The purpose of this assignment is to practice using external APIs to call inform
 
 
 ## Usage
-The page is on localhost:3001. once you are at that site you just need to search for a city name, and if found the information will be shown on the page. 
+The page is on localhost:3001. <br>
+once you are at that site you just need to search for a city name, <br>
+and if found the information will be shown on the page. 
 
 
 
