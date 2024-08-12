@@ -15,7 +15,7 @@ class HistoryService {
    filepath: string;
 
   constructor() {
-    this.filepath = path.join(__dirname, '../../db/db.json');
+    this.filepath = path.join(__dirname, '../../db/searchHistory.json');
   }
 
     // Create the file if it doesn't exist

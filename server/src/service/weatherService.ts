@@ -3,6 +3,7 @@ import { Response } from 'express';
 import fetch from 'node-fetch';
 dotenv.config();
 
+
 // Define an interface for the Weather API response
 interface WeatherApiResponse {
   current: {
@@ -67,7 +68,6 @@ class Weather {
     this.weatherDescription = weatherDescription;
   }
 }
-
 // TODO: Complete the WeatherService class
 class WeatherService {
   baseURL: string;
