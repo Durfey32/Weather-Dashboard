@@ -1,32 +1,46 @@
 import dotenv from 'dotenv';
-// import { response } from 'express';
+import { response } from 'express';
 import fetch from 'node-fetch';
 dotenv.config();
 
 // Define an interface for the Weather API response
-interface WeatherApiResponse {
-  current: {
-    temp: number;
-    humidity: number;
-    wind_speed: number;
-    weather: {
-      icon: string;
-      description: string;
-    }[];
-  };
-  daily: {
-    dt: number;
-    temp: {
-      day: number;
-    };
-    wind_speed: number;
-    humidity: number;
-    weather: {
-      icon: string;
-      description: string;
-    }[];
+interface Weather {
+  temp: number;
+  humidity: number;
+  wind_speed: number;
+  weather: {
+    icon: string;
+    description: string;
   }[];
 }
+
+async function fetchWeather(): Promise<Weather> {
+  const response = await fetch('https://api.weather.com/v3/wx/conditions/current?apiKey=YOUR_API_KEY&format=json');
+  
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  const data: any = await response.json();
+  
+  // Assuming the API response matches the Weather interface
+  return data.current as Weather;
+}
+
+async function displayWeather() {
+  try {
+    const currentWeather = await fetchWeather();
+    console.log(`Temperature: ${currentWeather.temp}`);
+    console.log(`Humidity: ${currentWeather.humidity}`);
+    console.log(`Wind Speed: ${currentWeather.wind_speed}`);
+    console.log(`Weather Description: ${currentWeather.weather[0].description}`);
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+  }
+}
+
+displayWeather();
+
 
 // TODO: Define an interface for the Coordinates object
 interface Coordinates {
