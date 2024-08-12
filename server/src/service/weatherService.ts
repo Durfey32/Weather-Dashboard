@@ -40,12 +40,12 @@ interface Location {
     lat: number;
     lon: number;
   };
-  name: string;
+  city: string;
 }
 
 // TODO: Define a class for the Weather object
 class Weather {
-  cityName: string;
+  city: string;
   temperature: number;
   humidity: number;
   windSpeed: number;
@@ -53,14 +53,14 @@ class Weather {
   weatherDescription: string;
 
   constructor(
-    cityName: string,
+    city: string,
     temperature: number,
     humidity: number,
     windSpeed: number,
     weatherIcon: string,
     weatherDescription: string
   ) {
-    this.cityName = cityName;
+    this.city = city;
     this.temperature = temperature;
     this.humidity = humidity;
     this.windSpeed = windSpeed;
@@ -80,13 +80,13 @@ class WeatherService {
   }
 
   // TODO: Create fetchLocationData method
-  async fetchLocationData(cityName: string): Promise<Location> {
-    const response = await fetch(this.buildGeocodeQuery(cityName));
+  async fetchLocationData(city: string): Promise<Location> {
+    const response = await fetch(this.buildGeocodeQuery(city));
     if (!response.ok) {
       throw new Error(`Failed to fetch location data: ${response.statusText}`);
     }
     const data = await response.json() as Location;
-    console.log('Fetching location data for city:', cityName);
+    console.log('Fetching location data for city:', city);
     return data;
     
   }
@@ -135,9 +135,9 @@ class WeatherService {
   }
   // TODO: Build parseCurrentWeather method
   private parseCurrentWeather(response: any): Weather {
-    const {name, main, weather, wind} = response;
+    const {city, main, weather, wind} = response;
     return new Weather(
-        name,
+        city,
         main.temp,
         main.humidity,
         wind.speed,
@@ -165,11 +165,17 @@ class WeatherService {
       const weatherData = await this.fetchWeatherData(coordinates);
       const currentWeather = this.parseCurrentWeather(weatherData);
       const forecast = this.buildForecastArray(weatherData.daily);
-      
+  
       res.status(200).json({ currentWeather, forecast });
     } catch (error: unknown) {
-      console.error('Error getting weather data:', (error as Error).message);
-      res.status(500).json({ error: (error as Error).message });
+      const errorMessage = (error as Error).message;
+      console.error('Error getting weather data:', errorMessage);
+  
+      if (errorMessage.includes('Unauthorized')) {
+        res.status(401).json({ error: 'Invalid API key or Unauthorized request' });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
+      }
     }
   }
 }

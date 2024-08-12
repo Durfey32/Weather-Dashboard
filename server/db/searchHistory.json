@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "name": "San Diego",
+    "id": 1
+  },
+  {
+    "name": "salt lake city",
+    "id": 2
+  },
+  {
+    "name": "salt lake city",
+    "id": 3
+  }
+]
