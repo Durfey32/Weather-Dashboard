@@ -40,12 +40,12 @@ interface Location {
     lat: number;
     lon: number;
   };
-  city: string;
+  cityName: string;
 }
 
 // TODO: Define a class for the Weather object
 class Weather {
-  city: string;
+  cityName: string;
   temperature: number;
   humidity: number;
   windSpeed: number;
@@ -53,14 +53,14 @@ class Weather {
   weatherDescription: string;
 
   constructor(
-    city: string,
+    cityName: string,
     temperature: number,
     humidity: number,
     windSpeed: number,
     weatherIcon: string,
     weatherDescription: string
   ) {
-    this.city = city;
+    this.cityName = cityName;
     this.temperature = temperature;
     this.humidity = humidity;
     this.windSpeed = windSpeed;
@@ -77,17 +77,18 @@ class WeatherService {
     this.baseURL = 'https://api.openweathermap.org/data/2.5/';
     this.apiKey = process.env.WEATHER_API_KEY ?? '38662cb52989288bb7671256cb34a9bb';
     console.log('API Key:', this.apiKey);
+    console.log('Loaded API Key:', process.env.WEATHER_API_KEY);
   }
 
   // TODO: Create fetchLocationData method
-  async fetchLocationData(city: string): Promise<Location> {
-    const response = await fetch(this.buildGeocodeQuery(city));
+  async fetchLocationData(cityName: string): Promise<Location> {
+    const response = await fetch(this.buildGeocodeQuery(cityName));
     if (!response.ok) {
       throw new Error(`Failed to fetch location data: ${response.statusText}`);
     }
-    const data = await response.json() as Location;
-    console.log('Fetching location data for city:', city);
-    return data;
+    // const data = await response.json() as Location;
+    console.log('Fetching location data for city:', cityName);
+    return response.json() as Promise<Location>;
     
   }
 
@@ -101,8 +102,8 @@ class WeatherService {
   }
 
   // TODO: Create buildGeocodeQuery method
-  private buildGeocodeQuery(city: string): string {
-    const queryURL = `${this.baseURL}weather?q=${encodeURIComponent(city)}&appid=${this.apiKey}&units=metric`;
+  private buildGeocodeQuery(cityName: string): string {
+    const queryURL = `${this.baseURL}weather?q=${encodeURIComponent(cityName)}&appid=${this.apiKey}&units=metric`;
     console.log('Geocode Query URL:', queryURL);
     return queryURL;
   }
@@ -114,18 +115,34 @@ class WeatherService {
   }
 
   // TODO: Create fetchAndDestructureLocationData method
-  private async fetchAndDestructureLocationData(city: string): Promise<Coordinates> {
-    const locationData = await this.fetchLocationData(city);
+  private async fetchAndDestructureLocationData(cityName: string): Promise<Coordinates> {
+    const locationData = await this.fetchLocationData(cityName);
     return this.destructureLocationData(locationData);
   }
 
   // TODO: Create fetchWeatherData method
   private async fetchWeatherData(coordinates: Coordinates): Promise<WeatherApiResponse> {
     const response = await fetch(this.buildWeatherQuery(coordinates));
+    
     if (!response.ok) {
+      const errorText = await response.text(); 
+      console.error('Failed to fetch weather data:', errorText); 
       throw new Error(`Failed to fetch weather data: ${response.statusText}`);
     }
-    return response.json() as Promise<WeatherApiResponse>;
+  
+    // Check if the response body is empty
+    const responseBody = await response.text();
+    if (!responseBody) {
+      throw new Error('Received empty response from the weather API');
+    }
+  
+    try {
+      // Parse the JSON only if the response is not empty
+      return JSON.parse(responseBody) as WeatherApiResponse;
+    } catch (error) {
+      console.error('Failed to parse weather data:', error);
+      throw new Error('Failed to parse weather data');
+    }
   }
   // TODO: Build parseCurrentWeather method
   private parseCurrentWeather(response: any): Weather {
@@ -153,9 +170,9 @@ class WeatherService {
   }
 
   // TODO: Complete getWeatherForCity method
-  async getWeatherForCity(city: string, res: Response): Promise<void> {
+  async getWeatherForCity(cityName: string, res: Response): Promise<void> {
     try {
-      const coordinates = await this.fetchAndDestructureLocationData(city);
+      const coordinates = await this.fetchAndDestructureLocationData(cityName);
       const weatherData = await this.fetchWeatherData(coordinates);
       const currentWeather = this.parseCurrentWeather(weatherData);
       const forecast = this.buildForecastArray(weatherData.daily);
@@ -165,10 +182,8 @@ class WeatherService {
       const errorMessage = (error as Error).message;
       console.error('Error getting weather data:', errorMessage);
   
-      if (errorMessage.includes('Unauthorized')) {
-        res.status(401).json({ error: 'Invalid API key or Unauthorized request' });
-      } else {
-        res.status(500).json({ error: 'An unknown error occurred' });
+      if (errorMessage.includes('Failed to fetch location data')) {
+        res.status(404).json({ error: 'City not found' });  
       }
     }
   }

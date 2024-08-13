@@ -10,11 +10,8 @@ The purpose of this assignment is to practice using external APIs to call inform
 ## Table of Contents
 
 * [Usage](#usage)
-
 * [License](#license)
 * [Features](#features)
-
-* [Tests](#tests)
 * [Questions?](#questions)
 
 
@@ -36,11 +33,6 @@ and if found the information will be shown on the page.
 ## Features
 APIs using https://openweathermap.org/
 
-
-
-
-## Tests
-Screenshot
 
 
 ## Questions?

@@ -34,13 +34,13 @@ API Calls
 
 */
 
-const fetchWeather = async (city: string) => {
+const fetchWeather = async (cityName: string) => {
   const response = await fetch('/api/weather/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ city }),
+    body: JSON.stringify({ cityName }),
   });
 
   const weatherData = await response.json();
@@ -77,11 +77,11 @@ Render Functions
 */
 
 const renderCurrentWeather = (currentWeather: any): void => {
-  const { name, date, icon, iconDescription, tempF, windSpeed, humidity } =
+  const { city, date, icon, iconDescription, tempF, windSpeed, humidity } =
     currentWeather;
 
   // convert the following to typescript
-  heading.textContent = `${name} (${date})`;
+  heading.textContent = `${city} (${date})`;
   weatherIcon.setAttribute(
     'src',
     `https://openweathermap.org/img/w/${icon}.png`
