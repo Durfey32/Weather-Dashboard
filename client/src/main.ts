@@ -34,13 +34,13 @@ API Calls
 
 */
 
-const fetchWeather = async (city: string) => {
+const fetchWeather = async (cityName: string) => {
   const response = await fetch('/api/weather/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ city }),
+    body: JSON.stringify({ cityName }),
   });
 
   const weatherData = await response.json();

@@ -86,9 +86,9 @@ class WeatherService {
     if (!response.ok) {
       throw new Error(`Failed to fetch location data: ${response.statusText}`);
     }
-    // const data = await response.json() as Location;
+    const data = await response.json() as Location;
     console.log('Fetching location data for city:', cityName);
-    return response.json() as Promise<Location>;
+    return data;
     
   }
 
@@ -146,14 +146,14 @@ class WeatherService {
   }
   // TODO: Build parseCurrentWeather method
   private parseCurrentWeather(response: any): Weather {
-    const { name, main, weather, wind } = response;
+    const {city, main, weather, wind} = response;
     return new Weather(
-      name,
-      main.temp,
-      main.humidity,
-      wind.speed,
-      weather[0].icon,
-      weather[0].description
+        city,
+        main.temp,
+        main.humidity,
+        wind.speed,
+        weather[0].icon,
+        weather[0].description
     );
   }
 
@@ -176,14 +176,16 @@ class WeatherService {
       const weatherData = await this.fetchWeatherData(coordinates);
       const currentWeather = this.parseCurrentWeather(weatherData);
       const forecast = this.buildForecastArray(weatherData.daily);
-  
+      
       res.status(200).json({ currentWeather, forecast });
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = (error as Error).message;
       console.error('Error getting weather data:', errorMessage);
   
-      if (errorMessage.includes('Failed to fetch location data')) {
-        res.status(404).json({ error: 'City not found' });  
+      if (errorMessage.includes('Unauthorized')) {
+        res.status(401).json({ error: 'Invalid API key or Unauthorized request' });
+      } else {
+        res.status(500).json({ error: 'An unknown error occurred' });
       }
     }
   }
