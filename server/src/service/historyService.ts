@@ -18,12 +18,11 @@ class HistoryService {
     this.filepath = path.join(__dirname, '../../db/searchHistory.json');
   }
 
-    // Create the file if it doesn't exist
     private async ensureFileExists(): Promise<void> {
       try {
         await fs.access(this.filepath);
       } catch (error) {
-        await fs.writeFile(this.filepath, '[]', 'utf-8'); // Create an empty array
+        await fs.writeFile(this.filepath, '[]', 'utf-8'); 
       }
     }
 

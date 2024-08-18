@@ -15,7 +15,7 @@ interface WeatherApiResponse {
       description: string;
     }[];
   };
-  daily: {
+  list: {
     dt: number;
     temp: {
       day: number;
@@ -74,7 +74,7 @@ class WeatherService {
   apiKey: string;
   // TODO: Define the baseURL, API key, and city name properties
   constructor() {
-    this.baseURL = 'https://api.openweathermap.org/data/2.5/';
+    this.baseURL = 'https://api.openweathermap.org/';
     this.apiKey = process.env.WEATHER_API_KEY ?? '38662cb52989288bb7671256cb34a9bb';
     console.log('API Key:', this.apiKey);
     console.log('Loaded API Key:', process.env.WEATHER_API_KEY);
@@ -88,22 +88,25 @@ class WeatherService {
     }
     const data = await response.json() as Location;
     console.log('Fetching location data for city:', cityName);
+    console.log('Data: ', data);
     return data;
     
   }
 
   // TODO: Create destructureLocationData method
   private destructureLocationData(locationData: any): Coordinates {
-    if (!locationData.coord) {
+    // console.log('Lat:', locationData.Data[0].lat);
+    console.log('Locationdata', locationData[0].lat);
+    if (!locationData [0].lat) {
       throw new Error('Invalid location data received from API');
     }
-    const { coord: { lat, lon } } = locationData;
+    const { lat, lon } = locationData [0];
     return { lat, lon };
   }
 
   // TODO: Create buildGeocodeQuery method
   private buildGeocodeQuery(cityName: string): string {
-    const queryURL = `${this.baseURL}weather?q=${encodeURIComponent(cityName)}&appid=${this.apiKey}&units=metric`;
+    const queryURL = `${this.baseURL}geo/1.0/direct?q=${encodeURIComponent(cityName)}&appid=${this.apiKey}&units=metric`;
     console.log('Geocode Query URL:', queryURL);
     return queryURL;
   }
@@ -111,7 +114,7 @@ class WeatherService {
 
   // TODO: Create buildWeatherQuery method
   private buildWeatherQuery(coordinates: Coordinates): string {
-    return `${this.baseURL}onecall?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${this.apiKey}&units=metric`;
+    return `${this.baseURL}data/2.5/forecast?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${this.apiKey}&units=metric`;
   }
 
   // TODO: Create fetchAndDestructureLocationData method
@@ -122,7 +125,9 @@ class WeatherService {
 
   // TODO: Create fetchWeatherData method
   private async fetchWeatherData(coordinates: Coordinates): Promise<WeatherApiResponse> {
+    console.log(this.buildWeatherQuery(coordinates));
     const response = await fetch(this.buildWeatherQuery(coordinates));
+  
     
     if (!response.ok) {
       const errorText = await response.text(); 
@@ -146,7 +151,8 @@ class WeatherService {
   }
   // TODO: Build parseCurrentWeather method
   private parseCurrentWeather(response: any): Weather {
-    const {city, main, weather, wind} = response;
+    console.log('Response:', response);
+    const {city, main, weather, wind} = response.list[0];
     return new Weather(
         city,
         main.temp,
@@ -161,9 +167,9 @@ class WeatherService {
   private buildForecastArray(weatherData: any[]): any[] {
     return weatherData.map((day: any) => ({
       date: new Date(day.dt * 1000).toLocaleDateString(),
-      temp: day.temp.day,
-      windSpeed: day.wind_speed,
-      humidity: day.humidity,
+      temp: day.main.temp,
+      windSpeed: day.wind.speed,
+      humidity: day.main.humidity,
       weatherIcon: day.weather[0].icon,
       weatherDescription: day.weather[0].description,
     }));
@@ -173,9 +179,13 @@ class WeatherService {
   async getWeatherForCity(cityName: string, res: Response): Promise<void> {
     try {
       const coordinates = await this.fetchAndDestructureLocationData(cityName);
+      console.log('Coordinates:', coordinates);
       const weatherData = await this.fetchWeatherData(coordinates);
+      console.log('Weather Data:', weatherData);
       const currentWeather = this.parseCurrentWeather(weatherData);
-      const forecast = this.buildForecastArray(weatherData.daily);
+      console.log('Current Weather:', currentWeather);
+      const forecast = this.buildForecastArray(weatherData.list);
+      console.log('Forecast:', forecast);
       
       res.status(200).json({ currentWeather, forecast });
     } catch (error: unknown) {
