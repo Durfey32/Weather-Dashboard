@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import { Response } from 'express';
 import fetch from 'node-fetch';
 dotenv.config();
 
@@ -74,7 +73,7 @@ class WeatherService {
   apiKey: string;
   // TODO: Define the baseURL, API key, and city name properties
   constructor() {
-    this.baseURL = 'https://api.openweathermap.org/';
+    this.baseURL = process.env.BASE_URL ?? 'https://api.openweathermap.org/';
     this.apiKey = process.env.WEATHER_API_KEY ?? '38662cb52989288bb7671256cb34a9bb';
     console.log('API Key:', this.apiKey);
     console.log('Loaded API Key:', process.env.WEATHER_API_KEY);
@@ -88,7 +87,7 @@ class WeatherService {
     }
     const data = await response.json() as Location;
     console.log('Fetching location data for city:', cityName);
-    console.log('Data: ', data);
+    // console.log('Data: ', data);
     return data;
     
   }
@@ -96,7 +95,7 @@ class WeatherService {
   // TODO: Create destructureLocationData method
   private destructureLocationData(locationData: any): Coordinates {
     // console.log('Lat:', locationData.Data[0].lat);
-    console.log('Locationdata', locationData[0].lat);
+    // console.log('Locationdata', locationData[0].lat);
     if (!locationData [0].lat) {
       throw new Error('Invalid location data received from API');
     }
@@ -127,39 +126,28 @@ class WeatherService {
   private async fetchWeatherData(coordinates: Coordinates): Promise<WeatherApiResponse> {
     console.log(this.buildWeatherQuery(coordinates));
     const response = await fetch(this.buildWeatherQuery(coordinates));
-  
-    
-    if (!response.ok) {
-      const errorText = await response.text(); 
-      console.error('Failed to fetch weather data:', errorText); 
-      throw new Error(`Failed to fetch weather data: ${response.statusText}`);
-    }
-  
-    // Check if the response body is empty
     const responseBody = await response.text();
-    if (!responseBody) {
-      throw new Error('Received empty response from the weather API');
-    }
   
     try {
-      // Parse the JSON only if the response is not empty
       return JSON.parse(responseBody) as WeatherApiResponse;
     } catch (error) {
-      console.error('Failed to parse weather data:', error);
-      throw new Error('Failed to parse weather data');
+      throw new Error(`Failed to parse weather data: ${error}`);
     }
   }
   // TODO: Build parseCurrentWeather method
   private parseCurrentWeather(response: any): Weather {
-    console.log('Response:', response);
-    const {city, main, weather, wind} = response.list[0];
+    const cityName = response.city?.name;
+    if (!cityName) {
+      throw new Error("City name is undefined in the weather API response");
+    }
+    const { main, weather, wind } = response.list[0];
     return new Weather(
-        city,
-        main.temp,
-        main.humidity,
-        wind.speed,
-        weather[0].icon,
-        weather[0].description
+      cityName,                
+      main.temp,   
+      main.humidity,           
+      wind.speed,              
+      weather[0].icon,         
+      weather[0].description  
     );
   }
 
@@ -176,27 +164,18 @@ class WeatherService {
   }
 
   // TODO: Complete getWeatherForCity method
-  async getWeatherForCity(cityName: string, res: Response): Promise<void> {
+  async getWeatherForCity(cityName: string): Promise<{ current: Weather; forecast: any[]; }> {
     try {
       const coordinates = await this.fetchAndDestructureLocationData(cityName);
-      console.log('Coordinates:', coordinates);
       const weatherData = await this.fetchWeatherData(coordinates);
-      console.log('Weather Data:', weatherData);
       const currentWeather = this.parseCurrentWeather(weatherData);
       console.log('Current Weather:', currentWeather);
       const forecast = this.buildForecastArray(weatherData.list);
-      console.log('Forecast:', forecast);
       
-      res.status(200).json({ currentWeather, forecast });
-    } catch (error: unknown) {
-      const errorMessage = (error as Error).message;
-      console.error('Error getting weather data:', errorMessage);
-  
-      if (errorMessage.includes('Unauthorized')) {
-        res.status(401).json({ error: 'Invalid API key or Unauthorized request' });
-      } else {
-        res.status(500).json({ error: 'An unknown error occurred' });
-      }
+      return { current: currentWeather, forecast };
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
     }
   }
 }
